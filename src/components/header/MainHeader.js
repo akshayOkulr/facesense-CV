@@ -1,34 +1,13 @@
-import React, { useEffect, useState, useRef } from 'react';
-import {
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  Keyboard,
-} from 'react-native';
+import React, { useState } from 'react';
+import { StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import colors from '../../theme/colors';
 import { useAuth } from '../../contexts/AuthContext';
 import { getInitials } from '../../helpers/getInitials';
-import { SettingIcon } from '../../assets';
 import SideDrawer from '../drawer/SideDrawer';
-import IpConfigModal from '../IpConfigModal';
-import Toast from 'react-native-toast-message';
 
 const MainHeader = ({ navigation }) => {
-  const { userDetails, configuredIP, updateIP } = useAuth();
+  const { userDetails } = useAuth();
   const [drawerVisible, setDrawerVisible] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [ipAddress, setIpAddress] = useState('');
-  const [isConfiguring, setIsConfiguring] = useState(false);
-
-  const ipInputRef = useRef(null);
-
-  useEffect(() => {
-    if (configuredIP) {
-      setIpAddress(configuredIP);
-    }
-  }, [configuredIP]);
 
   const handleDrawerOpen = () => {
     setDrawerVisible(true);
@@ -36,55 +15,6 @@ const MainHeader = ({ navigation }) => {
 
   const handleDrawerClose = () => {
     setDrawerVisible(false);
-  };
-
-  const openConfigModal = () => {
-    setModalVisible(true);
-  };
-
-  const closeConfigModal = () => {
-    setModalVisible(false);
-    setIsConfiguring(false);
-    Keyboard.dismiss();
-  };
-
-  const handleConfigure = async () => {
-    const value = ipAddress.trim();
-
-    if (!value) {
-      Keyboard.dismiss();
-      Toast.show({
-        type: 'AppError',
-        text1: 'Validation',
-        text2: 'Please enter an IP address',
-        position: 'bottom',
-      });
-      return;
-    }
-
-    try {
-      setIsConfiguring(true);
-      Keyboard.dismiss();
-      await updateIP(value);
-      setTimeout(() => {
-        setIsConfiguring(false);
-        closeConfigModal();
-        Toast.show({
-          type: 'AppSuccess',
-          text1: 'Success',
-          text2: 'IP address configured successfully',
-          position: 'bottom',
-        });
-      }, 600);
-    } catch (e) {
-      setIsConfiguring(false);
-      Toast.show({
-        type: 'AppError',
-        text1: 'Error',
-        text2: 'Failed to save IP address',
-        position: 'bottom',
-      });
-    }
   };
 
   return (
@@ -102,27 +32,12 @@ const MainHeader = ({ navigation }) => {
             <Text style={styles.subText}>{userDetails?.email}</Text>
           </View>
         </View>
-        <TouchableOpacity onPress={openConfigModal}>
-          <SettingIcon />
-        </TouchableOpacity>
       </View>
       <SideDrawer
         visible={drawerVisible}
         onClose={handleDrawerClose}
         navigation={navigation}
         userData={userDetails}
-      />
-
-      <IpConfigModal
-        visible={modalVisible}
-        onRequestClose={closeConfigModal}
-        value={ipAddress}
-        onChangeText={setIpAddress}
-        onSubmitEditing={handleConfigure}
-        onPress={handleConfigure}
-        isLoading={isConfiguring}
-        inputRef={ipInputRef}
-        onShow={() => ipInputRef.current?.focus()}
       />
     </View>
   );

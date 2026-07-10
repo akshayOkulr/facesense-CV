@@ -13,15 +13,20 @@ export const setConfiguredIPNoAuth = async ip => {
   }
 };
 
+// All API calls now go through a single fixed API Gateway host (see
+// src/api/axiosConfig.js) instead of a per-device local IP, so this value
+// is only kept to satisfy the existing "configure IP" UI gate.
+const CLOUD_GATEWAY_PLACEHOLDER = 'cloud-gateway';
+
 export const getConfiguredIPNoAuth = async () => {
   try {
     const creds = await Keychain.getGenericPassword({
       service: IP_SERVICE,
     });
-    return creds ? creds.password : null;
+    return creds ? creds.password : CLOUD_GATEWAY_PLACEHOLDER;
   } catch (e) {
     console.error('getConfiguredIPNoAuth error:', e);
-    return null;
+    return CLOUD_GATEWAY_PLACEHOLDER;
   }
 };
 

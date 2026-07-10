@@ -45,15 +45,23 @@ const TeachersAttendance = ({ navigation, route }) => {
   };
 
   const verifyTeacherAttendance = async (token, sessionId) => {
-    const response = await getTeachersAttendance(
-      configuredIP,
-      token,
-      sessionId,
-    );
-    navigation.replace('StudentsAttendance', {
-      userData: response,
-      token: token,
-    });
+    try {
+      const response = await getTeachersAttendance(
+        configuredIP,
+        token,
+        sessionId,
+      );
+      navigation.replace('StudentsAttendance', {
+        userData: response,
+        token: token,
+      });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Attendance marked',
+        text2: 'Recognized successfully, but could not load attendance details.',
+      });
+    }
   };
 
   const handleError = error => {

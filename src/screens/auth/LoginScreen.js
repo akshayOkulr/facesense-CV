@@ -17,14 +17,13 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
-import { LoginLogo, Okulr, OkulrLogo, SettingIcon } from '../../assets';
+import { LoginLogo, Okulr, OkulrLogo } from '../../assets';
 import Toast from 'react-native-toast-message';
 import AppInput from '../../components/AppInput';
 import colors from '../../theme/colors';
 import { loginUser } from '../../api/authApi';
 import AppText from '../../components/AppText';
 import ForgotPasswordModal from '../../components/ForgotPassword';
-import IpConfigModal from '../../components/IpConfigModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { saveSecureSession } from '../../helpers/secureStorage';
 import { isBiometricAvailable } from '../../helpers/KeyChain';
@@ -39,9 +38,7 @@ const LoginScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
 
   const [isFrgPwdVisible, setIsFrgPwdVisible] = useState(false);
-  const [showConfigModal, setShowConfigModal] = useState(false);
   const [ipAddress, setIpAddress] = useState('');
-  const [isConfiguring, setIsConfiguring] = useState(false);
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
@@ -61,7 +58,6 @@ const LoginScreen = ({ navigation }) => {
   const inputFieldsOpacity = useRef(new Animated.Value(0)).current;
   const inputFieldsTranslateY = useRef(new Animated.Value(20)).current;
 
-  const ipInputRef = useRef(null);
   const ipLatestRef = useRef('');
 
   useEffect(() => {
@@ -220,15 +216,6 @@ const LoginScreen = ({ navigation }) => {
       return;
     }
 
-    if (!ipLatestRef.current) {
-      Toast.show({
-        type: 'AppError',
-        text1: 'Please configure the server IP first',
-        position: 'bottom',
-      });
-      return;
-    }
-
     try {
       setIsLoggingIn(true);
 
@@ -290,59 +277,6 @@ const LoginScreen = ({ navigation }) => {
     setIsFrgPwdVisible(true);
   };
 
-  const openConfigModal = () => {
-    setShowConfigModal(true);
-  };
-
-  const closeConfigModal = () => {
-    setShowConfigModal(false);
-    setIsConfiguring(false);
-    Keyboard.dismiss();
-  };
-
-  const handleConfigure = async () => {
-    const value = (ipLatestRef.current || '').trim();
-
-    if (!value) {
-      Keyboard.dismiss();
-      Toast.show({
-        type: 'AppError',
-        text1: 'Validation',
-        text2: 'Please enter an IP address',
-        position: 'bottom',
-      });
-      return;
-    }
-
-    try {
-      setIsConfiguring(true);
-      Keyboard.dismiss();
-
-      await updateIP(value);
-
-      setIpAddress(value);
-      ipLatestRef.current = value;
-
-      setTimeout(() => {
-        setIsConfiguring(false);
-        closeConfigModal();
-      }, 600);
-    } catch (e) {
-      setIsConfiguring(false);
-      Toast.show({
-        type: 'AppError',
-        text1: 'Error',
-        text2: 'Failed to save IP address',
-        position: 'bottom',
-      });
-    }
-  };
-
-  const handleIpChange = text => {
-    setIpAddress(text);
-    ipLatestRef.current = text;
-  };
-
   return (
     <>
       <SafeAreaView style={styles.topSafeArea} edges={['top']} />
@@ -363,12 +297,6 @@ const LoginScreen = ({ navigation }) => {
                 style={[styles.headerContainer, { opacity: headerOpacity }]}
               >
                 <OkulrLogo />
-                <TouchableOpacity
-                  style={styles.settingsIcon}
-                  onPress={openConfigModal}
-                >
-                  <SettingIcon />
-                </TouchableOpacity>
               </Animated.View>
 
               {/* Animated Logo Container */}
@@ -481,18 +409,6 @@ const LoginScreen = ({ navigation }) => {
               </Animated.View>
             </View>
           </TouchableWithoutFeedback>
-
-          <IpConfigModal
-            visible={showConfigModal}
-            onRequestClose={closeConfigModal}
-            value={ipAddress}
-            onChangeText={handleIpChange}
-            onSubmitEditing={handleConfigure}
-            onPress={handleConfigure}
-            isLoading={isConfiguring}
-            inputRef={ipInputRef}
-            onShow={() => ipInputRef.current?.focus()}
-          />
 
           <ForgotPasswordModal
             visible={isFrgPwdVisible}

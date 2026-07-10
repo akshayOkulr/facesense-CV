@@ -10,12 +10,15 @@ export const NetworkErrorType = {
   UNKNOWN: 'UNKNOWN',
 };
 
-// Create HTTP axios instance (non-SSL)
-const createAxiosInstance = (ipAddress, port = 4010) => {
-  const baseUrl = `http://${ipAddress}:${port}`;
+// All backends are unified behind one API Gateway host, split by path
+// prefix (/auth, /admin, /api/t1, /api/r1) instead of separate ports.
+// ipAddress/port args are kept for call-site compatibility but ignored.
+export const API_BASE_URL =
+  'https://6hh756amy8.execute-api.ap-south-1.amazonaws.com';
 
+const createAxiosInstance = (_ipAddress, _port) => {
   const instance = axios.create({
-    baseURL: baseUrl,
+    baseURL: API_BASE_URL,
     timeout: 30000,
   });
 

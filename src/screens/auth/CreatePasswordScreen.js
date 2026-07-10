@@ -18,15 +18,13 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
-import { LoginLogo, Okulr, OkulrLogo, SettingIcon } from '../../assets';
+import { LoginLogo, Okulr, OkulrLogo } from '../../assets';
 import Toast from 'react-native-toast-message';
 import AppInput from '../../components/AppInput';
 import colors from '../../theme/colors';
 import { createPasswordApi } from '../../api/authApi';
 import AppText from '../../components/AppText';
 import ForgotPasswordModal from '../../components/ForgotPassword';
-import IpConfigModal from '../../components/IpConfigModal';
-import { getConfiguredIP, setConfiguredIP } from '../../helpers/storageHelpers';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -39,9 +37,6 @@ const CreatePasswordScreen = ({ navigation }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const [isFrgPwdVisible, setIsFrgPwdVisible] = useState(false);
-  const [showConfigModal, setShowConfigModal] = useState(false);
-  const [ipAddress, setIpAddress] = useState('');
-  const [isConfiguring, setIsConfiguring] = useState(false);
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
@@ -50,9 +45,6 @@ const CreatePasswordScreen = ({ navigation }) => {
   ).current;
   const logoOpacity = useRef(new Animated.Value(1)).current;
   const logoScale = useRef(new Animated.Value(1)).current;
-
-  const ipInputRef = useRef(null);
-  const ipLatestRef = useRef('');
 
   useEffect(() => {}, [insets]);
 
@@ -63,30 +55,6 @@ const CreatePasswordScreen = ({ navigation }) => {
       showSub.remove();
       hideSub.remove();
     };
-  }, []);
-
-  // useEffect(() => {
-  //   ClearData();
-  // }, []);
-
-  // const ClearData = async () => {
-  //   try {
-  //     await clearAllStorage();
-  //   } catch (error) {
-  //     console.log('Logout error:', error);
-  //   }
-  // };
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const savedIp = await getConfiguredIP();
-        if (savedIp) {
-          setIpAddress(savedIp);
-          ipLatestRef.current = savedIp;
-        }
-      } catch (e) {}
-    })();
   }, []);
 
   const handleKeyboardShow = () => {
@@ -159,14 +127,6 @@ const CreatePasswordScreen = ({ navigation }) => {
       });
       return;
     }
-    if (!ipLatestRef.current) {
-      Toast.show({
-        type: 'error',
-        text1: 'Configuration',
-        text2: 'Please configure the server IP first',
-      });
-      return;
-    }
     if (!username) {
       Toast.show({
         type: 'error',
@@ -180,7 +140,7 @@ const CreatePasswordScreen = ({ navigation }) => {
       setIsLoggingIn(true);
       const { token } = route.params || {};
       const data = await createPasswordApi(
-        ipLatestRef.current,
+        'cloud-gateway',
         username,
         pwd,
         token,
@@ -215,57 +175,6 @@ const CreatePasswordScreen = ({ navigation }) => {
     }, 3000);
   };
 
-  const openConfigModal = () => {
-    setShowConfigModal(true);
-  };
-
-  const closeConfigModal = () => {
-    setShowConfigModal(false);
-    setIsConfiguring(false);
-    Keyboard.dismiss();
-  };
-
-  const handleConfigure = async () => {
-    const value = (ipLatestRef.current || '').trim();
-
-    if (!value) {
-      Keyboard.dismiss();
-      Toast.show({
-        type: 'error',
-        text1: 'Validation',
-        text2: 'Please enter an IP address',
-      });
-      return;
-    }
-
-    try {
-      setIsConfiguring(true);
-      Keyboard.dismiss();
-
-      await setConfiguredIP(value);
-
-      setIpAddress(value);
-      ipLatestRef.current = value;
-
-      setTimeout(() => {
-        setIsConfiguring(false);
-        closeConfigModal();
-      }, 600);
-    } catch (e) {
-      setIsConfiguring(false);
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to save IP address',
-      });
-    }
-  };
-
-  const handleIpChange = text => {
-    setIpAddress(text);
-    ipLatestRef.current = text;
-  };
-
   return (
     <>
       <SafeAreaView style={styles.topSafeArea} edges={['top']} />
@@ -283,12 +192,6 @@ const CreatePasswordScreen = ({ navigation }) => {
             <View style={styles.mainContainer}>
               <View style={styles.headerContainer}>
                 <OkulrLogo />
-                <TouchableOpacity
-                  style={styles.settingsIcon}
-                  onPress={openConfigModal}
-                >
-                  <SettingIcon />
-                </TouchableOpacity>
               </View>
 
               <Animated.View
@@ -379,18 +282,6 @@ const CreatePasswordScreen = ({ navigation }) => {
             </View>
           </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
-
-        <IpConfigModal
-          visible={showConfigModal}
-          onRequestClose={closeConfigModal}
-          value={ipAddress}
-          onChangeText={handleIpChange}
-          onSubmitEditing={handleConfigure}
-          onPress={handleConfigure}
-          isLoading={isConfiguring}
-          inputRef={ipInputRef}
-          onShow={() => ipInputRef.current?.focus()}
-        />
 
         <ForgotPasswordModal
           visible={isFrgPwdVisible}
