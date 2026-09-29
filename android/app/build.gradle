@@ -9,6 +9,17 @@ react {
 
 def enableProguardInReleaseBuilds = true
 
+def releaseKeystorePath = project.findProperty("FACESENSE_RELEASE_STORE_FILE")
+        ?: System.getenv("FACESENSE_RELEASE_STORE_FILE")
+        ?: "release.keystore"
+def releaseKeystoreFile = file(releaseKeystorePath)
+def releaseStorePassword = project.findProperty("FACESENSE_RELEASE_STORE_PASSWORD")
+        ?: System.getenv("FACESENSE_RELEASE_STORE_PASSWORD") ?: ""
+def releaseKeyAlias = project.findProperty("FACESENSE_RELEASE_KEY_ALIAS")
+        ?: System.getenv("FACESENSE_RELEASE_KEY_ALIAS") ?: ""
+def releaseKeyPassword = project.findProperty("FACESENSE_RELEASE_KEY_PASSWORD")
+        ?: System.getenv("FACESENSE_RELEASE_KEY_PASSWORD") ?: releaseStorePassword
+
 project.ext.react = [
     enableHermes: true
 ]
@@ -54,11 +65,14 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
-        release {
-            storeFile file('release.keystore')
-            storePassword 'password'
-            keyAlias 'release'
-            keyPassword 'password'
+
+        if (releaseKeystoreFile.exists()) {
+            release {
+                storeFile releaseKeystoreFile
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
         }
     }
 
@@ -68,7 +82,9 @@ android {
         }
 
         release {
-            signingConfig signingConfigs.release
+            if (releaseKeystoreFile.exists()) {
+                signingConfig signingConfigs.release
+            }
 
             /**
              * Code + resource shrinking

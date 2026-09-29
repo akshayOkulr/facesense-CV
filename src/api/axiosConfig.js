@@ -14,7 +14,7 @@ export const NetworkErrorType = {
 // prefix (/auth, /admin, /api/t1, /api/r1) instead of separate ports.
 // ipAddress/port args are kept for call-site compatibility but ignored.
 export const API_BASE_URL =
-  'https://6hh756amy8.execute-api.ap-south-1.amazonaws.com';
+  'https://api-acats.okulrtechminds.com';
 
 const createAxiosInstance = (_ipAddress, _port) => {
   const instance = axios.create({
